@@ -3,133 +3,125 @@ import { MapPin, Phone, Printer, Mail, Facebook, Twitter } from "lucide-react";
 
 export default function ContactSection() {
   return (
-    <section className="py-16 lg:py-24 bg-white">
-      <div className="max-w-7xl mx-auto px-6 sm:px-8 lg:px-12">
-        {/* Minimal & Official Header */}
-        <div className="text-center mb-12">
-          <h2 className="text-4xl lg:text-5xl font-black text-blue-950 border-b-4 border-blue-950 inline-block pb-3">
+    <section className="py-10 lg:py-12 bg-white">
+      <div className="max-w-6xl mx-auto px-6 sm:px-8 lg:px-10">
+
+        {/* Header */}
+        <div className="text-center mb-8">
+          <h2 className="text-3xl lg:text-4xl font-black text-blue-950 border-b-4 border-blue-950 inline-block pb-2">
             Contact Us
           </h2>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-12 lg:gap-16">
-          {/* LEFT: 100% Official Layout – Clean & Enhanced */}
-          <div className="bg-gray-50 rounded-2xl p-8 lg:p-12 shadow-lg border border-gray-200">
-            <div className="grid md:grid-cols-2 gap-10">
-              {/* Main Contact */}
-              <div>
-                <h3 className="text-xl font-black text-blue-950 border-b-4 border-blue-950 pb-2 mb-6 inline-block">
+        {/* Main Grid */}
+        <div className="grid lg:grid-cols-2 gap-8">
+
+          {/* LEFT: Contact Info */}
+          <div className="bg-gray-50 rounded-xl p-6 shadow-sm border border-gray-200">
+            <div className="grid md:grid-cols-2 gap-6">
+
+              {/* Main Office */}
+              <div className="space-y-3.5 text-sm">
+                <h3 className="text-base font-black text-blue-950 border-b-4 border-blue-950 pb-1 mb-4 inline-block">
                   Election Commission Nepal
                 </h3>
-                <div className="space-y-5 text-gray-700">
-                  <div className="flex items-start gap-4">
-                    <MapPin className="w-6 h-6 text-blue-950 mt-1 flex-shrink-0" />
-                    <span className="leading-relaxed">Kantipath, Kathmandu</span>
+
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-blue-950 flex-shrink-0" />
+                  <span>Kantipath, Kathmandu</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Phone className="w-5 h-5 text-blue-950 flex-shrink-0" />
+                  <div>
+                    <span>(977-1) 5328663</span>
+                    <span className="text-xs text-gray-500 ml-2">(टोल फ्री ११०२)</span>
                   </div>
-                  <div className="flex items-start gap-4">
-                    <Phone className="w-6 h-6 text-blue-950 mt-1 flex-shrink-0" />
-                    <div>
-                      <span className="block leading-relaxed">Phone: (977-1) 5328663</span>
-                      <span className="block text-sm">(टोल फ्री 1102)</span>
-                    </div>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <Printer className="w-6 h-6 text-blue-950 mt-1 flex-shrink-0" />
-                    <span className="leading-relaxed">Fax: +977-1-4225580, 4221227</span>
-                  </div>
-                  <div className="flex items-start gap-4">
-                    <Mail className="w-6 h-6 text-blue-950 mt-1 flex-shrink-0" />
-                    <span className="leading-relaxed">Email: info@election.gov.np</span>
-                  </div>
-                  <div className="flex gap-6 mt-8">
-                    <a href="#" className="text-blue-950 hover:text-blue-700 transition">
-                      <Facebook className="w-8 h-8" />
-                    </a>
-                    <a href="#" className="text-blue-950 hover:text-blue-700 transition">
-                      <Twitter className="w-8 h-8" />
-                    </a>
-                  </div>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Printer className="w-5 h-5 text-blue-950 flex-shrink-0" />
+                  <span>Fax: +977-1-4225580</span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-blue-950 flex-shrink-0" />
+                  <span>info@election.gov.np</span>
+                </div>
+
+                <div className="flex gap-4 mt-4">
+                  <a href="#" className="text-blue-950 hover:text-blue-700 transition">
+                    <Facebook className="w-6 h-6" />
+                  </a>
+                  <a href="#" className="text-blue-950 hover:text-blue-700 transition">
+                    <Twitter className="w-6 h-6" />
+                  </a>
                 </div>
               </div>
 
               {/* Spokespersons */}
-              <div className="space-y-8">
-                {/* Spokesperson */}
+              <div className="space-y-4 text-sm">
                 <div>
-                  <h4 className="text-lg font-black text-blue-950 border-b-4 border-blue-950 pb-2 mb-4 inline-block">
+                  <h4 className="text-sm font-black text-blue-950 border-b-4 border-blue-950 pb-0.5 mb-2 inline-block">
                     Spokesperson
                   </h4>
-                  <div className="pl-2">
-                    <p className="font-semibold text-blue-950">Narayan Prasad Bhattarai</p>
-                    <p className="text-sm text-gray-600 mt-1">Phone: —</p>
-                    <p className="text-sm text-gray-600">Email: spokesperson@election.gov.np</p>
-                  </div>
+                  <p className="font-semibold text-blue-950">Narayan Prasad Bhattarai</p>
+                  <p className="text-gray-600">spokesperson@election.gov.np</p>
                 </div>
 
-                {/* Assistant Spokesperson 1 */}
                 <div>
-                  <h4 className="text-lg font-black text-blue-950 border-b-4 border-blue-950 pb-2 mb-4 inline-block">
-                    Assistant Spokesperson
+                  <h4 className="text-sm font-black text-blue-950 border-b-4 border-blue-950 pb-0.5 mb-2 inline-block">
+                    Asst. Spokesperson
                   </h4>
-                  <div className="pl-2">
-                    <p className="font-semibold text-blue-950">Prakash Neupane</p>
-                    <p className="text-sm text-gray-600 mt-1">Phone: 9851321385</p>
-                    <p className="text-sm text-gray-600">Email: infoa@election.gov.np</p>
-                  </div>
+                  <p className="font-semibold text-blue-950">Prakash Neupane</p>
+                  <p className="text-gray-600">9851321385 • infoa@election.gov.np</p>
                 </div>
 
-                {/* Assistant Spokesperson 2 */}
                 <div>
-                  <h4 className="text-lg font-black text-blue-950 border-b-4 border-blue-950 pb-2 mb-4 inline-block">
-                    Assistant Spokesperson
+                  <h4 className="text-sm font-black text-blue-950 border-b-4 border-blue-950 pb-0.5 mb-2 inline-block">
+                    Asst. Spokesperson
                   </h4>
-                  <div className="pl-2">
-                    <p className="font-semibold text-blue-950">Sita Pun Shrees</p>
-                    <p className="text-sm text-gray-600 mt-1">Phone: 9743939053</p>
-                    <p className="text-sm text-gray-600">Email: ppm@election.gov.np</p>
-                  </div>
+                  <p className="font-semibold text-blue-950">Sita Pun Shrees</p>
+                  <p className="text-gray-600">9743939053 • ppm@election.gov.np</p>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* RIGHT: Contact Form – Clean & Official */}
-          <div>
-            <div className="bg-white rounded-2xl shadow-xl p-10 lg:p-12 border border-gray-200">
-              <h3 className="text-2xl font-black text-blue-950 border-b-4 border-blue-950 pb-3 mb-10 inline-block">
-                Contact Form
-              </h3>
+          {/* RIGHT: Contact Form */}
+          <div className="bg-white rounded-xl shadow-md p-6 border border-gray-200">
+            <h3 className="text-lg font-black text-blue-950 border-b-4 border-blue-950 pb-1.5 mb-6 inline-block">
+              Contact Form
+            </h3>
 
-              <form className="space-y-8">
-                <input
-                  type="text"
-                  placeholder="name (required) *"
-                  className="w-full px-6 py-5 border border-gray-300 rounded-lg focus:border-blue-700 focus:outline-none transition text-base shadow-sm"
-                  required
-                />
-                <input
-                  type="email"
-                  placeholder="email (required) *"
-                  className="w-full px-6 py-5 border border-gray-300 rounded-lg focus:border-blue-700 focus:outline-none transition text-base shadow-sm"
-                  required
-                />
-                <textarea
-                  rows={10}
-                  placeholder="message (required) *"
-                  className="w-full px-6 py-5 border border-gray-300 rounded-lg focus:border-blue-700 focus:outline-none transition resize-none text-base shadow-sm"
-                  required
-                ></textarea>
-
-                <div className="text-right">
-                  <button
-                    type="submit"
-                    className="bg-blue-950 hover:bg-blue-900 text-white font-black px-16 py-5 rounded-lg transition-all duration-300 shadow-xl hover:shadow-2xl text-lg"
-                  >
-                    SEND
-                  </button>
-                </div>
-              </form>
-            </div>
+            <form className="space-y-4">
+              <input
+                type="text"
+                placeholder="Name *"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-700 focus:outline-none text-sm transition"
+                required
+              />
+              <input
+                type="email"
+                placeholder="Email *"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-700 focus:outline-none text-sm transition"
+                required
+              />
+              <textarea
+                rows={5}
+                placeholder="Message *"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:border-blue-700 focus:outline-none resize-none text-sm transition"
+                required
+              />
+              <div className="text-right pt-2">
+                <button
+                  type="submit"
+                  className="bg-blue-950 hover:bg-blue-900 text-white font-bold px-9 py-3.5 rounded-lg text-sm shadow-md transition"
+                >
+                  SEND MESSAGE
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       </div>
