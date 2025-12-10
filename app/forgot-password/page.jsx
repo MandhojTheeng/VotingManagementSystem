@@ -1,4 +1,3 @@
-// app/forgot-password/page.jsx — FINAL RESPONSIVE & SPACED VERSION
 "use client";
 
 import { useState, useEffect } from "react";
@@ -62,7 +61,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-sky-50 to-indigo-100 flex flex-col">
-      {/* Main Content - Takes available space */}
       <div className="flex-1 flex items-center justify-center px-4 py-12 md:py-16">
         <div className="w-full max-w-md">
           {/* Header */}
@@ -195,7 +193,6 @@ export default function ForgotPasswordPage() {
         </div>
       </div>
 
-      {/* Footer with proper spacing */}
       <div className="mt-auto">
         <MainFooter />
       </div>

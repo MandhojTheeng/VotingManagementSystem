@@ -1,4 +1,3 @@
-// app/register/page.jsx
 "use client";
 
 import { useState } from "react";
@@ -54,12 +53,8 @@ export default function VoterRegisterPage() {
       // Save token to cookie
       setToken(res.data.token);
 
-      // THIS IS THE CRITICAL FIX – Full page navigation
+      // Redirect to dashboard
       window.location.href = "/dashboard";
-
-      // Alternative (also works):
-      // router.push("/dashboard");
-      // router.refresh();
 
     } catch (err) {
       setError(

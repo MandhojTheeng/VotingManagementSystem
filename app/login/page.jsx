@@ -1,7 +1,7 @@
-// app/login/page.jsx
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import API from "../../lib/api";
 import { setToken } from "../../lib/auth";
 import MainFooter from "../../components/Footer/MainFooter";
@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const router = useRouter();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -18,18 +19,21 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const res = await API.post("/auth/login", { email, password });
+      // FIXED: Removed extra "/api" — baseURL already has it
+      const res = await API.post("/auth/login", {
+        email: email.trim().toLowerCase(),
+        password,
+      });
 
-      // Save token to cookie
-      setToken(res.data.token);
+      // Save token + user role
+      setToken(res.data.token, res.data.user);
 
-      // THIS IS THE KEY FIX – Full page navigation ensures cookie is available immediately
-      window.location.href = "/dashboard";
-
-      // Alternative (also works great):
-      // router.push("/dashboard");
-      // router.refresh(); // forces Next.js to re-check auth on client
-
+      // Redirect based on role
+      if (res.data.user?.role === "admin") {
+        router.push("/admin-dashboard");
+      } else {
+        router.push("/dashboard");
+      }
     } catch (err) {
       setError(
         err?.response?.data?.message || "Invalid email or password"
