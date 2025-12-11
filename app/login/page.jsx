@@ -19,7 +19,6 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      // FIXED: Removed extra "/api" — baseURL already has it
       const res = await API.post("/auth/login", {
         email: email.trim().toLowerCase(),
         password,
@@ -30,7 +29,7 @@ export default function LoginPage() {
 
       // Redirect based on role
       if (res.data.user?.role === "admin") {
-        router.push("/admin-dashboard");
+        router.push("/admin/dashboard");
       } else {
         router.push("/dashboard");
       }

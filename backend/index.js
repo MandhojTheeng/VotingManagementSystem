@@ -1,9 +1,3 @@
-/**
- * ELECTION COMMISSION NEPAL - DIGITAL VOTING SYSTEM
- * FINAL VERSION - 100% WORKING - NO ERRORS
- * Admin Login: admin@election.gov.np / admin123
- */
-
 const express = require("express");
 const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
@@ -12,6 +6,9 @@ const cors = require("cors");
 const nodemailer = require("nodemailer");
 const http = require("http");
 const { Server } = require("socket.io");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
 require("dotenv").config();
 
 const app = express();
@@ -19,15 +16,45 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: "http://localhost:3000",
-    methods: ["GET", "POST"]
+    methods: ["GET", "POST", "PUT", "DELETE"]
   }
 });
 
-// ======================== MIDDLEWARE ========================
+// Create uploads folder
+if (!fs.existsSync("./uploads")) {
+  fs.mkdirSync("./uploads");
+}
+
+// Multer configuration for symbol images
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, "symbol-" + uniqueSuffix + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 2 * 1024 * 1024 }, // 2MB max
+  fileFilter: (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only image files are allowed!"));
+    }
+  }
+});
+
+// Middleware
 app.use(cors({ origin: "http://localhost:3000", credentials: true }));
 app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/uploads", express.static("uploads"));
 
-// ======================== DATABASE CONNECTION ========================
+// MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("MongoDB Connected Successfully"))
   .catch(err => {
@@ -35,15 +62,12 @@ mongoose.connect(process.env.MONGO_URI)
     process.exit(1);
   });
 
-// ======================== MODELS ========================
+// Models
 const User = require("./models/User");
 const Election = require("./models/Election");
 const Vote = require("./models/Vote");
 
-// ======================== CONFIG ========================
-const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_2025";
-
-// FIXED: createTransport (not createTransporter)
+// Email Transporter
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
@@ -52,7 +76,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-// ======================== MIDDLEWARE ========================
+const JWT_SECRET = process.env.JWT_SECRET || "fallback_secret_2025";
+
+// Auth Middleware
 const authMiddleware = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "No token provided" });
@@ -73,11 +99,10 @@ const adminMiddleware = (req, res, next) => {
 };
 
 // ======================== AUTH ROUTES ========================
-
-// REGISTER
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { fullName, email, password, confirmPassword, citizenshipNo, phone } = req.body;
+
     if (!fullName || !email || !password || !citizenshipNo || !phone) {
       return res.status(400).json({ message: "All fields required" });
     }
@@ -98,6 +123,7 @@ app.post("/api/auth/register", async (req, res) => {
     }
 
     const hashed = await bcrypt.hash(password, 12);
+
     await User.create({
       fullName,
       email: normalizedEmail,
@@ -114,7 +140,6 @@ app.post("/api/auth/register", async (req, res) => {
   }
 });
 
-// LOGIN - WORKS FOR ADMIN & VOTERS
 app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -148,7 +173,6 @@ app.post("/api/auth/login", async (req, res) => {
   }
 });
 
-// FORGOT PASSWORD OTP (Your Beautiful Email)
 app.post("/api/auth/forgot-password-otp", async (req, res) => {
   try {
     const { email } = req.body;
@@ -161,7 +185,7 @@ app.post("/api/auth/forgot-password-otp", async (req, res) => {
 
     const otp = Math.floor(100000 + Math.random() * 900000).toString();
     user.resetPasswordOTP = otp;
-    user.resetPasswordExpires = Date.now() + 600000; // 10 minutes
+    user.resetPasswordExpires = Date.now() + 600000;
     await user.save();
 
     console.log(`OTP for ${user.email}: ${otp}`);
@@ -171,45 +195,9 @@ app.post("/api/auth/forgot-password-otp", async (req, res) => {
       to: user.email,
       subject: "Your Secure Password Reset Code",
       html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <title>Password Reset</title>
-          <style>
-            body { margin:0; background:#f0f9ff; font-family:'Segoe UI',Arial,sans-serif; }
-            .container { max-width:600px; margin:40px auto; background:white; border-radius:20px; overflow:hidden; box-shadow:0 20px 40px rgba(30,64,175,0.1); }
-            .header { background:linear-gradient(135deg,#1e40af,#3b82f6); padding:40px; text-align:center; color:white; }
-            .header h1 { margin:0; font-size:32px; font-weight:900; }
-            .header p { margin:10px 0 0; font-size:18px; opacity:0.9; }
-            .body { padding:50px 40px; text-align:center; }
-            .otp-box { background:#f8faff; border:3px dashed #3b82f6; border-radius:16px; padding:30px; margin:30px auto; max-width:320px; }
-            .otp { font-size:52px; letter-spacing:15px; color:#1e40af; font-weight:bold; margin:0; }
-            .footer { background:#1e3a8a; color:#e0f2fe; padding:25px; text-align:center; font-size:14px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>Election Commission Nepal</h1>
-              <p>निर्वाचन आयोग नेपाल</p>
-            </div>
-            <div class="body">
-              <h2 style="color:#1e40af;">Password Reset Request</h2>
-              <p style="font-size:18px;color:#4b5563;">Hello <strong>${user.fullName}</strong>,</p>
-              <p style="font-size:18px;color:#4b5563;margin:25px 0;">Your secure verification code is:</p>
-              <div class="otp-box">
-                <div class="otp">${otp}</div>
-              </div>
-              <p style="color:#6b7280;margin:30px 0;">This code expires in <strong>10 minutes</strong></p>
-              <p style="color:#6b7280;">If you didn't request this, ignore this email.</p>
-            </div>
-            <div class="footer">
-              <p>© 2025 Election Commission Nepal • All rights reserved</p>
-            </div>
-          </div>
-        </body>
-        </html>
+        <h2>Password Reset Request</h2>
+        <p>Your OTP is: <strong>${otp}</strong></p>
+        <p>It expires in 10 minutes.</p>
       `,
     });
 
@@ -220,11 +208,12 @@ app.post("/api/auth/forgot-password-otp", async (req, res) => {
   }
 });
 
-// RESET PASSWORD
 app.post("/api/auth/reset-password-otp", async (req, res) => {
   try {
     const { email, otp, password } = req.body;
-    if (!email || !otp || !password) return res.status(400).json({ message: "All fields required" });
+    if (!email || !otp || !password) {
+      return res.status(400).json({ message: "All fields required" });
+    }
 
     const user = await User.findOne({
       email: email.trim().toLowerCase(),
@@ -246,7 +235,7 @@ app.post("/api/auth/reset-password-otp", async (req, res) => {
   }
 });
 
-// ======================== ELECTION ROUTES ========================
+// ======================== PUBLIC ROUTES ========================
 app.get("/api/elections", authMiddleware, async (req, res) => {
   try {
     const now = new Date();
@@ -274,7 +263,6 @@ app.get("/api/elections/:id", authMiddleware, async (req, res) => {
   }
 });
 
-// ======================== VOTING SYSTEM ========================
 app.get("/api/votes/check/:electionId", authMiddleware, async (req, res) => {
   const vote = await Vote.findOne({ electionId: req.params.electionId, userId: req.user.id });
   res.json({ hasVoted: !!vote });
@@ -284,6 +272,7 @@ app.post("/api/votes", authMiddleware, async (req, res) => {
   try {
     const { electionId, candidateId } = req.body;
     const election = await Election.findById(electionId);
+
     if (!election || election.status !== "active") {
       return res.status(400).json({ message: "Voting is closed" });
     }
@@ -298,6 +287,7 @@ app.post("/api/votes", authMiddleware, async (req, res) => {
     }, { arrayFilters: [{ "c._id": candidateId }] });
 
     const updated = await Election.findById(electionId);
+
     io.emit("vote_cast", {
       electionId,
       totalVotes: updated.candidates.reduce((a, c) => a + c.voteCount, 0),
@@ -330,16 +320,252 @@ app.get("/api/admin/stats", authMiddleware, adminMiddleware, async (req, res) =>
   }
 });
 
-app.post("/api/admin/elections", authMiddleware, adminMiddleware, async (req, res) => {
+// ADMIN: List all elections with DYNAMIC real-time status
+app.get("/api/admin/elections", authMiddleware, adminMiddleware, async (req, res) => {
   try {
-    const election = await Election.create(req.body);
-    res.json({ success: true, election });
+    const now = new Date();
+    const elections = await Election.find().sort({ createdAt: -1 });
+
+    const electionsWithStatus = elections.map(election => {
+      const startDate = new Date(election.startDate);
+      const endDate = new Date(election.endDate);
+      let status;
+
+      if (now < startDate) {
+        status = "upcoming";
+      } else if (now <= endDate) {
+        status = "active";
+      } else {
+        status = "completed";
+      }
+
+      return {
+        ...election.toObject(),
+        status
+      };
+    });
+
+    res.json({ success: true, elections: electionsWithStatus });
   } catch (err) {
+    console.error("Failed to fetch admin elections:", err);
+    res.status(500).json({ message: "Failed to fetch elections" });
+  }
+});
+
+app.get("/api/admin/elections/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const election = await Election.findById(req.params.id);
+    if (!election) {
+      return res.status(404).json({ message: "Election not found" });
+    }
+
+    // Also compute dynamic status for single election view
+    const now = new Date();
+    const status = now < election.startDate ? "upcoming" : now <= election.endDate ? "active" : "completed";
+
+    res.json({ 
+      success: true, 
+      election: {
+        ...election.toObject(),
+        status
+      }
+    });
+  } catch (err) {
+    console.error("Get single election error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+// CREATE ELECTION - FIXED
+app.post("/api/admin/elections", authMiddleware, adminMiddleware, upload.array("symbols"), async (req, res) => {
+  try {
+    const { title, description = "", startDate, endDate, candidates: candidatesJson } = req.body;
+
+    if (!title || !startDate || !endDate || candidatesJson === undefined) {
+      return res.status(400).json({ message: "Title, dates, and candidates data required" });
+    }
+
+    let candidates = [];
+
+    if (typeof candidatesJson === "string") {
+      try {
+        candidates = JSON.parse(candidatesJson);
+      } catch (e) {
+        return res.status(400).json({ message: "Invalid candidates format" });
+      }
+    } else if (Array.isArray(candidatesJson)) {
+      candidates = candidatesJson;
+    } else {
+      return res.status(400).json({ message: "Invalid candidates format" });
+    }
+
+    if (!Array.isArray(candidates) || candidates.length < 2) {
+      return res.status(400).json({ message: "Title, dates, and at least 2 candidates required" });
+    }
+
+    if (candidates.some(c => !c.name || c.name.trim() === "")) {
+      return res.status(400).json({ message: "All candidates must have a name" });
+    }
+
+    const electionCandidates = candidates.map((c, i) => ({
+      name: c.name.trim(),
+      party: c.party?.trim() || "Independent",
+      symbol: req.files?.[i] ? `/uploads/${req.files[i].filename}` : "",
+      voteCount: 0
+    }));
+
+    const election = await Election.create({
+      title: title.trim(),
+      description,
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      candidates: electionCandidates
+    });
+
+    res.json({ success: true, message: "Election created successfully", election });
+  } catch (err) {
+    console.error("Create election error:", err);
     res.status(500).json({ message: "Failed to create election" });
   }
 });
 
-// ======================== AUTO-CREATE ADMIN & DUMMY DATA ========================
+// UPDATE ELECTION - FIXED
+app.put("/api/admin/elections/:id", authMiddleware, adminMiddleware, upload.array("symbols"), async (req, res) => {
+  try {
+    const election = await Election.findById(req.params.id);
+    if (!election) return res.status(404).json({ message: "Election not found" });
+
+    const now = new Date();
+    const status = now < election.startDate ? "upcoming" : now <= election.endDate ? "active" : "completed";
+    if (status === "active") {
+      return res.status(400).json({ message: "Cannot edit active election" });
+    }
+
+    const { title, description = "", startDate, endDate, candidates: candidatesJson } = req.body;
+
+    if (!title || !startDate || !endDate || candidatesJson === undefined) {
+      return res.status(400).json({ message: "Title, dates, and candidates required" });
+    }
+
+    let candidates = [];
+
+    if (typeof candidatesJson === "string") {
+      try {
+        candidates = JSON.parse(candidatesJson);
+      } catch (e) {
+        return res.status(400).json({ message: "Invalid candidates format" });
+      }
+    } else if (Array.isArray(candidatesJson)) {
+      candidates = candidatesJson;
+    } else {
+      return res.status(400).json({ message: "Invalid candidates format" });
+    }
+
+    if (!Array.isArray(candidates) || candidates.length < 2) {
+      return res.status(400).json({ message: "At least 2 candidates required" });
+    }
+
+    if (candidates.some(c => !c.name?.trim())) {
+      return res.status(400).json({ message: "All candidates must have a name" });
+    }
+
+    const updatedCandidates = candidates.map((c, i) => {
+      const oldCandidate = election.candidates[i] || {};
+      return {
+        name: c.name.trim(),
+        party: c.party?.trim() || "Independent",
+        symbol: req.files?.[i] ? `/uploads/${req.files[i].filename}` : (oldCandidate.symbol || ""),
+        voteCount: oldCandidate.voteCount || 0
+      };
+    });
+
+    election.title = title.trim();
+    election.description = description;
+    election.startDate = new Date(startDate);
+    election.endDate = new Date(endDate);
+    election.candidates = updatedCandidates;
+
+    await election.save();
+
+    res.json({ success: true, message: "Election updated successfully", election });
+  } catch (err) {
+    console.error("Update election error:", err);
+    res.status(500).json({ message: "Failed to update election" });
+  }
+});
+
+app.delete("/api/admin/elections/:id", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const election = await Election.findById(req.params.id);
+    if (!election) return res.status(404).json({ message: "Not found" });
+
+    const now = new Date();
+    const status = now < election.startDate ? "upcoming" : now <= election.endDate ? "active" : "completed";
+    if (status === "active") {
+      return res.status(400).json({ message: "Cannot delete active election" });
+    }
+
+    election.candidates.forEach(c => {
+      if (c.symbol) {
+        const filePath = path.join(__dirname, c.symbol);
+        if (fs.existsSync(filePath)) {
+          fs.unlinkSync(filePath);
+        }
+      }
+    });
+
+    await Election.findByIdAndDelete(req.params.id);
+    await Vote.deleteMany({ electionId: req.params.id });
+    res.json({ success: true, message: "Election deleted permanently" });
+  } catch (err) {
+    res.status(500).json({ message: "Delete failed" });
+  }
+});
+
+app.post("/api/admin/elections/:id/end", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const election = await Election.findById(req.params.id);
+    if (!election) return res.status(404).json({ message: "Election not found" });
+
+    election.endDate = new Date();
+    await election.save();
+
+    io.emit("election_ended", { electionId: election._id });
+    res.json({ success: true, message: "Election ended manually" });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to end election" });
+  }
+});
+
+app.get("/api/admin/elections/:id/results", authMiddleware, adminMiddleware, async (req, res) => {
+  try {
+    const election = await Election.findById(req.params.id);
+    if (!election) return res.status(404).json({ message: "Election not found" });
+
+    const now = new Date();
+    const status = now < election.startDate ? "upcoming" : now <= election.endDate ? "active" : "completed";
+
+    const totalVotes = election.candidates.reduce((a, c) => a + c.voteCount, 0);
+    const results = election.candidates.map(c => ({
+      candidateId: c._id,
+      name: c.name,
+      party: c.party,
+      symbol: c.symbol ? `http://localhost:5000${c.symbol}` : null,
+      votes: c.voteCount,
+      percentage: totalVotes > 0 ? ((c.voteCount / totalVotes) * 100).toFixed(2) : 0
+    })).sort((a, b) => b.votes - a.votes);
+
+    res.json({
+      success: true,
+      election: { title: election.title, totalVotes, status },
+      results
+    });
+  } catch (err) {
+    res.status(500).json({ message: "Failed to load results" });
+  }
+});
+
+// ======================== AUTO CREATE ADMIN & DUMMY DATA ========================
 (async () => {
   const adminEmail = "admin@election.gov.np";
   const adminExists = await User.findOne({ email: adminEmail });
@@ -353,31 +579,30 @@ app.post("/api/admin/elections", authMiddleware, adminMiddleware, async (req, re
       phone: "9800000000",
       role: "admin"
     });
-    console.log("ADMIN ACCOUNT CREATED");
+    console.log("\nADMIN ACCOUNT CREATED");
     console.log("   Email: admin@election.gov.np");
-    console.log("   Password: admin123");
+    console.log("   Password: admin123\n");
   }
 
   if (await Election.countDocuments() === 0) {
     await Election.create({
       title: "Local Level Election 2082",
-      description: "Local government election",
+      description: "Local government election for all 753 local levels",
       startDate: new Date("2025-12-20"),
       endDate: new Date("2025-12-30"),
-      status: "upcoming",
       candidates: [
-        { name: "Ram Prasad Sharma", party: "Nepali Congress", voteCount: 0 },
-        { name: "Sita Devi Thapa", party: "CPN-UML", voteCount: 0 },
-        { name: "Hari Bahadur Gurung", party: "Independent", voteCount: 0 }
+        { name: "Ram Prasad Sharma", party: "Nepali Congress", symbol: "", voteCount: 0 },
+        { name: "Sita Devi Thapa", party: "CPN-UML", symbol: "", voteCount: 0 },
+        { name: "Hari Bahadur Gurung", party: "Independent", symbol: "", voteCount: 0 }
       ]
     });
-    console.log("Dummy election created");
+    console.log("Dummy election created\n");
   }
 })();
 
 // ======================== SOCKET.IO & SERVER START ========================
 io.on("connection", (socket) => {
-  console.log("Client connected:", socket.id);
+  console.log(`Client connected: ${socket.id}`);
 });
 
 const PORT = process.env.PORT || 5000;
@@ -387,6 +612,6 @@ server.listen(PORT, () => {
   console.log(`ADMIN LOGIN:`);
   console.log(`   Email: admin@election.gov.np`);
   console.log(`   Password: admin123`);
-  console.log(`OTP Email System Active`);
+  console.log(`Full Admin Panel + Live Voting + Symbol Upload Ready`);
   console.log("========================================");
 });

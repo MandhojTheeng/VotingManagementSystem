@@ -19,7 +19,6 @@ export default function AdminLayout({ children }) {
   // (redirect happens instantly on client – no flash, no hydration mismatch)
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
-      {/* Optional: Add a simple admin sidebar/header here later */}
       <div>
         {children}
       </div>
