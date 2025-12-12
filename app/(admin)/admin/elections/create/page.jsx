@@ -111,48 +111,54 @@ export default function ElectionForm() {
     setForm({ ...form, candidates: updated });
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+const handleSubmit = async (e) => {
+  e.preventDefault();
 
-    if (new Date(form.startDate) >= new Date(form.endDate)) {
-      alert("End date must be after start date");
-      return;
+  if (new Date(form.startDate) >= new Date(form.endDate)) {
+    alert("End date must be after start date");
+    return;
+  }
+
+  if (form.candidates.some(c => !c.name.trim())) {
+    alert("All candidates must have a name");
+    return;
+  }
+
+  const formData = new FormData();
+  formData.append("title", form.title.trim());
+  formData.append("description", form.description);
+  formData.append("startDate", form.startDate);
+  formData.append("endDate", form.endDate);
+
+  // Send candidates as JSON string
+  const candidatesData = form.candidates.map(c => ({
+    name: c.name.trim(),
+    party: c.party.trim() || "Independent"
+  }));
+  formData.append("candidates", JSON.stringify(candidatesData));
+
+  // Append all symbol files in order
+  form.candidates.forEach((c) => {
+    if (c.symbol && typeof c.symbol === "object") {
+      formData.append("symbols", c.symbol);
     }
+  });
 
-    if (form.candidates.some(c => !c.name.trim())) {
-      alert("All candidates must have a name");
-      return;
+  setLoading(true);
+  try {
+    if (isEdit) {
+      await API.put(`/admin/elections/${id}`, formData);
+    } else {
+      await API.post("/admin/elections", formData);
     }
-
-    const formData = new FormData();
-    formData.append("title", form.title);
-    formData.append("description", form.description);
-    formData.append("startDate", form.startDate);
-    formData.append("endDate", form.endDate);
-
-    form.candidates.forEach((c, i) => {
-      formData.append(`candidates[${i}][name]`, c.name);
-      formData.append(`candidates[${i}][party]`, c.party);
-      if (c.symbol && typeof c.symbol === "object") {
-        formData.append("symbols", c.symbol);
-      }
-    });
-
-    setLoading(true);
-    try {
-      if (isEdit) {
-        await API.put(`/admin/elections/${id}`, formData);
-      } else {
-        await API.post("/admin/elections", formData);
-      }
-      router.push("/admin/elections");
-    } catch (err) {
-      console.error(err);
-      alert(err.response?.data?.message || "Failed to save election");
-    } finally {
-      setLoading(false);
-    }
-  };
+    router.push("/admin/elections");
+  } catch (err) {
+    console.error(err);
+    alert(err.response?.data?.message || "Failed to save election");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <div className="min-h-screen bg-gray-100">
